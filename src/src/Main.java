@@ -101,7 +101,7 @@ public class Main {
 						break;
 
 					case 2:
-						Invoice.Set_Information();
+						Shop.Set_Information();
 						break;
 
 					case 3:
