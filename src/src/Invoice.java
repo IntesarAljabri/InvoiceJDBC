@@ -1,101 +1,217 @@
 package src;
 
+import java.math.RoundingMode;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Scanner;
+
+import javax.xml.crypto.Data;
 
 public class Invoice {
 
+	private static final int UnitPrice = 0;
+	private static final int Quantity = 0;
 	static ArrayList<String> invoiceList = new ArrayList<String>();
+	static Scanner scan = new Scanner(System.in);
 
-	static int invNO;
-	static String costumerName;
-	static int phone;
-	static Date date;
-	static int numberOfItems;
-	static double totalAmount;
-	static double paidAmount;
-	static double balance;
+	static int InvNO;
+	static String Costumer_Name;
+	static int Phone;
+	static Date Date;
+	static int NumberOfItem;
+	static double TotalPrice;
+	static DecimalFormat PaidAmount;
+	static DecimalFormat Balance;
+	private static Statement statment;
 
-	public static double Insert_Invoice(Statement statment) {
-		/*
-		 * String message = "How Many Invoice Do You want to Insert: ";
-		 * System.out.print(message);
-		 */
+	public static void Insert_Invoice() {
+	    Scanner scan = new Scanner(System.in);
+	    boolean repeat = true;
+	    String url = "jdbc:sqlserver://localhost:1433;" +"databaseName=InvoiceSystem;" + "encrypt=true;" + "trustServerCertificate=true";
+	    String user = "sa";
+	    String pass = "root";
+	    Connection con = null;
+	    try {
+	        Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+	        con = DriverManager.getConnection(url, user, pass);
+	        Statement statement = con.createStatement();
 
-		try {
-			String sql = "INSERT INTO Invoice (invNO, costumerName, phone, date ,numberOfItems   , totalAmount) "
-					+ "VALUES (" + invNO + ", '" + costumerName + "', " + phone + "," + date + "', " + numberOfItems
-					+ "', " + totalAmount + "', " + "')";
-			System.out.println("|---------------------------------------------------------|");
-			System.out.println("|                   INVOICE DETAILS                       |");
-			System.out.println("|---------------------------------------------------------|");
-			System.out.println("|Invoice ID :               " + Invoice.invNO + "         |");
-			System.out.println("|Invoice customerName :     " + Invoice.costumerName + "  |");
-			System.out.println("|Invoice phone :            " + Invoice.phone + "         |");
-			System.out.println("|Invoice date :             " + Invoice.date + "          |");
-			System.out.println("|Invoice numberOfItems :    " + Invoice.numberOfItems + " |");
-			System.out.println("|Invoice totalAmount :      " + Invoice.totalAmount + "   |");
-			System.out.println("|Invoice paidAmount :       " + Invoice.paidAmount + "    |");
-			System.out.println("-----------------------------------------------------------");
+	        System.out.println("|-------------------------------------------|");
+	        System.out.println("|                INVOICE DETAILS            |");
+	        System.out.println("|-------------------------------------------|");
 
-			int rows = statment.executeUpdate(sql);
-			System.out.println(rows + " row(s) inserted.");
+	        // Get input values from the user
+	        System.out.print("Enter Invoice Id: ");
+	        int invNO = scan.nextInt();
+	        System.out.print("Enter customer name: ");
+	        String customerName = scan.next();
+	        System.out.print("Enter Customer phone: ");
+	        int phone = scan.nextInt();
+	        System.out.print("Enter date: ");
+	        String date = scan.next();
+	        System.out.print("Enter number of items: ");
+	        int numberOfItems = scan.nextInt();
+	        System.out.print("Enter total price: ");
+	        double totalPrice = scan.nextDouble();
+	        System.out.print("Enter paid amount: ");
+	        double paidAmount = scan.nextDouble();
+	        System.out.print("Enter balance: ");
+	        double balance = scan.nextDouble();
 
-			double unitPrice = 0;
-			double quantity = 0;
-			double qtyprice = unitPrice * quantity;
+	        String sql = "INSERT INTO Invoice (invNO, Customer_Name, phone, date, numberOfItems, totalAmount) "
+	                + "VALUES (" + InvNO + ", '" + Costumer_Name + "', " + Phone + ", '" + Date + "', " + NumberOfItem
+	                + ", " + TotalPrice + ")";
+	        // Output the invoice details to the console
+	        System.out.println("|------------------------------------------|");
+	        System.out.println("|Invoice ID: " + InvNO);
+	        System.out.println("|Customer Name: " + Costumer_Name);
+	        System.out.println("|customer Phone: " + Phone);
+	        System.out.println("|Invoice Date: " + Date);
+	        System.out.println("|Number of Items: " + NumberOfItem);
+	        System.out.println("|Total Amount: " + TotalPrice);
+	        System.out.println("|paidAMount: " + PaidAmount);
+	        System.out.println("|Balance: " + Balance);
+	        System.out.println("|------------------------------------------|");
 
-			// return qtyprice;
+	        int rowsAffected = statement.executeUpdate(sql);
+	        System.out.println(rowsAffected + " row(s) inserted.");
 
-			double totalAmount = qtyprice;
-			if (totalAmount == qtyprice) {
-				System.out.println(" The Total_Amount : " + Invoice.totalAmount);
+	        if (numberOfItems <= 0 || totalPrice < 0) {
+	            throw new IllegalArgumentException("Invalid input values");
+	        }
 
-			} else if (qtyprice > totalAmount) {
-				balance = totalAmount - paidAmount;
-				return balance;
+	        double total = totalPrice;
+
+	        // Use a DecimalFormat object to format the total amount to two decimal places
+	        DecimalFormat df = new DecimalFormat("#.##");
+	        df.setRoundingMode(RoundingMode.HALF_UP);
+	        String formattedTotal = df.format(total);
+
+	        // Output the total amount to the console
+	        System.out.println("The Total Amount: " + formattedTotal);
+
+	        // Convert the formatted total amount back to a double for comparison
+	        double totalAmountValue = Double.parseDouble(formattedTotal);
+
+	        // Check if the paid amount is greater than or equal to the total amount
+	        if (paidAmount >= totalAmountValue) {
+	            double balanceValue = paidAmount - totalAmountValue;
+	            System.out.println("Balance: " + balanceValue);
+	        } else {
+	            throw new IllegalArgumentException("Insufficient payment amount");
+	        }
+		} catch (Exception ex) {
+			System.out.println(ex);
+		}
+
+		while (true) {
+			System.out.print("Do you want to insert new invoice? (y/n): ");
+			String select = scan.next();
+			if (select.equals("N") || select.equals("n")) {
+				repeat = false;
+				break;
+			} else if (select.equals("y") || select.equals("Y")) {
+				break;
 			} else {
+				System.out.println("Invalid Input");
+			}
+		}
+	}
 
-				System.out.println("Check You Balance Plz");
+	public static void Set_Information() {
+
+		String url = "jdbc:sqlserver://localhost:1433;" +"databaseName=InvoiceSystem;" + "encrypt=true;" + "trustServerCertificate=true";
+		String user = "sa";
+		String pass = "root";
+		Connection con = null;
+		try {
+			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+			con = DriverManager.getConnection(url, user, pass);
+			Statement statement = con.createStatement();
+
+			System.out.println("Enter Shop Name ");
+			String shopName = scan.next();
+			System.out.println("Enter telNumber ");
+			int telNumber = scan.nextInt();
+			System.out.println("Enter faxNumber");
+			int faxNumber = scan.nextInt();
+			System.out.println("Enter Email ");
+			String email = scan.next();
+			System.out.println("Enter website");
+			String website = scan.next();
+			
+			
+			
+			if (Shop.tel_Number == null) {
+			    // handle the case where the tel_Number is null
+			} else {
+			    String sql = "INSERT INTO Shop(ShopName, Fax, email, website, tel_Number) " +
+			        "VALUES ('" + Shop.shop_name + "', '" + Shop.Fax_Number + "', '" +
+			        Shop.email + "', '" + Shop.website + "', " + Shop.tel_Number + ")";
+
+				System.out.println("|--------------------------------|");
+				System.out.println("|      Shop Information          |");
+				System.out.println("|--------------------------------|");
+				System.out.println("|Shop Name:"+ Shop.shop_name);
+				System.out.println("|Tel Number:"+ Shop.tel_Number);
+				System.out.println("|Fax Number:"+Shop.Fax_Number);
+				System.out.println("|Shop Email:"+Shop.email);
+				System.out.println("|Shop website:"+ Shop.website);
+				System.out.println("|---------------------------------|");
+
+			    int rowsAffected = statement.executeUpdate(sql);
+			    System.out.println(rowsAffected + " row(s) inserted.");
 			}
 		}
 
 		catch (Exception ex) {
 			System.out.println(ex);
 		}
-		return balance;
-
 	}
 
 	// Select All data of invoice
-	public static void ReadFromItemTable(Statement statment) {
-		String message = "How many Invoice Do You Want To Print: ";
-		System.out.print(message);
-		int userinput = Main.getId(message);
+	public static void ReadFromItemTable() {
+		String url = "jdbc:sqlserver://localhost:1433;" +"databaseName=InvoiceSystem;" + "encrypt=true;" + "trustServerCertificate=true";
+		String user = "sa";
+		String pass = "root";
+		Connection con = null;
 		try {
-			String sql = "Select (" + userinput + ") * from Invoice ";
+			Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+			con = DriverManager.getConnection(url, user, pass);
+			Statement statement = con.createStatement();
+
+		
+			System.out.print("Enter Invoice Id To Print ");
+			int invNO=scan.nextInt();
+
+			String sql = "Select * from Invoice where invNO =  "+ invNO;
 
 			ResultSet result = statment.executeQuery(sql);
 
-			if (invNO == Invoice.invNO) {
+			if (invNO == Invoice.InvNO) {
 				for (int i = 0; i < Invoice.invoiceList.size(); i++) {
 					while (result.next())
-						System.out.println("|----------------------------------|");
+						System.out.println("|------------------------------------|");
 					System.out.println("|" + result.getString("invNO         |"));
 					System.out.println("|" + result.getString("costumerName  |"));
-					System.out.println("|" + result.getString("phone         |"));
 					System.out.println("|" + result.getString("date          |"));
 					System.out.println("|" + result.getString("numberOfItems |"));
 					System.out.println("|" + result.getString("totalAmount   |"));
-					System.out.println("|" + result.getString("paidAmount    |"));
-					System.out.println("|" + result.getString("Item_Id       |"));
-					System.out.println("|" + result.getString("item_Name     |"));
-					System.out.println("|" + result.getString("unitPrice     |"));
-					System.out.println("|" + result.getString("quantity      |"));
-					System.out.println("|" + result.getString("qtyprice      |"));
-					System.out.println("|----------------------------------|");
+					System.out.println("|------------------------------------|");
+					// System.out.println("|" + result.getString("phone |"));
+					// System.out.println("|" + result.getString("paidAmount |"));
+					// System.out.println("|" + result.getString("Item_Id |"));
+					// System.out.println("|" + result.getString("item_Name |"));
+					// System.out.println("|" + result.getString("unitPrice |"));
+					// System.out.println("|" + result.getString("quantity |"));
+					// System.out.println("|" + result.getString("qtyprice |"));
+					// System.out.println("|----------------------------------|");
 
 				}
 			}
@@ -107,4 +223,36 @@ public class Invoice {
 
 	}
 
+	public static double InvoiceSearchById() {
+		System.out.println("Enter invoice ID to search : ");
+		int id = scan.nextInt();
+
+		double totalAmount = Quantity * UnitPrice;
+
+		try {
+
+			String sql = "SELECT * FROM invoices WHERE invoice_id = " + id;
+
+			ResultSet result = statment.executeQuery(sql);
+
+			if (id == Invoice.invoiceList.size()) {
+				for (int i = 0; i < Invoice.invoiceList.size(); i++) {
+					System.out.println("|--------------------------------------------------------|");
+					System.out.println("|             Invoice Number :" + InvNO + "              |");
+					System.out.println("|--------------------------------------------------------|");
+					System.out.println("|Invoice NO: " + result.getInt("InvNO") + "              |");
+					System.out.println("|Customer Name: " + result.getString("Costumer_Name") + " |");
+					System.out.println("|Invoice Date: " + result.getDate("Date") + "            |");
+					System.out.println("|Total Amount: " + result.getDouble("totalAmount") + "   |");
+					System.out.println("|--------------------------------------------------------|");
+				}
+			} else {
+
+				System.out.println("No invoice there !! Sorry....");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return totalAmount;
+	}
 }
